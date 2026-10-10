@@ -1,6 +1,6 @@
-﻿namespace VehicleApp.Api.Models
+﻿namespace VehicleApp.Api.DTOS.Responses
 {
-    public class MakeResponse
+    public class MakeResponseDto
     {
         public int Id { get; set; }
         public string MakeName { get; set; }

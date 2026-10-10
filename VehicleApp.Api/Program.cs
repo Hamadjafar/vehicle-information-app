@@ -1,4 +1,6 @@
 
+using VehicleApp.Api.Services;
+
 namespace VehicleApp.Api
 {
     public class Program
@@ -10,9 +12,16 @@ namespace VehicleApp.Api
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            builder.Services.AddHttpClient<NhtsaService>(client =>
+            {
+                client.BaseAddress = new Uri("https://vpic.nhtsa.dot.gov/api/");
+            });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
 
             var app = builder.Build();
 
