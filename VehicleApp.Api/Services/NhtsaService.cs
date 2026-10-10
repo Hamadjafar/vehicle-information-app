@@ -16,30 +16,68 @@ namespace VehicleApp.Api.Services
 
         public async Task<List<MakeResponseDto>> GetAllMakesAsync()
         {
-            try
+            var response = await _httpClient.GetFromJsonAsync<NhtsaApiResponseDto<NhtsaMakeDto>>(NhtsaApiConstants.GetAllMakes);
+            if (response is null)
             {
-                var response = await _httpClient.GetFromJsonAsync<NhtsaApiResponseDto<NhtsaMakeDto>>(NhtsaApiConstants.GetAllMakes);
-                if (response is null)
-                {
-                    throw new HttpRequestException("NHTSA returned an empty response.");
-                }
+                throw new HttpRequestException("NHTSA returned an empty response.");
+            }
 
-                return response.Results
-                    .Select(make => new MakeResponseDto
-                    {
-                        Id = make.MakeId,
-                        MakeName = make.MakeName
-                    })
-                    .ToList();
-            }
-            catch (HttpRequestException)
+            return response.Results
+                .Select(make => new MakeResponseDto
+                {
+                    Id = make.MakeId,
+                    MakeName = make.MakeName
+                })
+                .ToList();
+        }
+
+        public async Task<List<VehicleTypeResponseDto>> GetVehicleTypesForMakeAsync(int makeId)
+        {
+
+            if (makeId <= 0)
             {
-                throw;
+                throw new ArgumentException("Make ID must be greater than zero.");
             }
-            catch (TaskCanceledException)
+
+            var response = await _httpClient.GetFromJsonAsync<NhtsaApiResponseDto<NhtsaVehicleTypeDto>>(string.Format(NhtsaApiConstants.GetVehicleTypesForMakeId, makeId));
+
+            if (response is null)
             {
-                throw;
+                throw new HttpRequestException("NHTSA returned an empty response.");
             }
+
+            return response.Results
+                .Select(vehicleType => new VehicleTypeResponseDto
+                {
+                    VehicleTypeId = vehicleType.VehicleTypeId,
+                    VehicleTypeName = vehicleType.VehicleTypeName
+                })
+                .ToList();
+        }
+
+
+        public async Task<List<VehicleModelResponseDto>> GetModelsForMakeYearAsync(int makeId, int year)
+        {
+
+            if (makeId <= 0 || year <= 0)
+            {
+                throw new ArgumentException("Make ID and year must be greater than zero.");
+            }
+            var endpoint = string.Format(NhtsaApiConstants.GetModelsForMakeIdYear, makeId, year);
+
+            var response = await _httpClient.GetFromJsonAsync<NhtsaApiResponseDto<NhtsaModelDto>>(endpoint);
+            if (response is null)
+            {
+                throw new HttpRequestException("NHTSA returned an empty response.");
+            }
+
+            return response.Results
+                .Select(model => new VehicleModelResponseDto
+                {
+                    ModelId = model.ModelId,
+                    ModelName = model.ModelName
+                })
+                .ToList();
         }
     }
 }

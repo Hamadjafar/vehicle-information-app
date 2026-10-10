@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.Diagnostics;
 using VehicleApp.Api.Services;
 
 namespace VehicleApp.Api
@@ -24,6 +25,41 @@ namespace VehicleApp.Api
 
 
             var app = builder.Build();
+
+
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+                    context.Response.ContentType = "application/json";
+
+                    context.Response.StatusCode = exception switch
+                    {
+                        ArgumentException => StatusCodes.Status400BadRequest,
+                        TaskCanceledException => StatusCodes.Status504GatewayTimeout,
+                        HttpRequestException => StatusCodes.Status502BadGateway,
+                        _ => StatusCodes.Status500InternalServerError
+                    };
+
+                    var message = context.Response.StatusCode switch
+                    {
+                        StatusCodes.Status400BadRequest => "Invalid request parameters.",
+                        StatusCodes.Status504GatewayTimeout => "The external service request timed out.",
+                        StatusCodes.Status502BadGateway => "The external service request failed.",
+
+                        _ => "An unexpected error occurred."
+                    };
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        context.Response.StatusCode,
+                        message
+                    });
+                });
+            });
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
