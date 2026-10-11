@@ -3,10 +3,11 @@ import { Component, computed, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AsyncPipe } from '@angular/common';
-import { Observable, Subject, catchError, debounceTime, distinctUntilChanged, filter, finalize, map, of, switchMap, tap } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, debounceTime, distinctUntilChanged, filter, finalize, map, of, switchMap, tap } from 'rxjs';
 import { VehicleService } from './services/VehicleService';
 import { Make } from './models/make';
 import { VehicleModel } from './models/VehicleModel';
+import { VehicleType } from './models/VehicleType';
 import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
@@ -22,6 +23,11 @@ export class App {
   protected selectedMake: Make | null = null;
   protected readonly makesError = signal('');
   protected readonly isSearchingMakes = signal(false);
+  protected readonly vehicleTypes = signal<VehicleType[]>([]);
+  protected readonly isLoadingVehicleTypes = signal(false);
+  protected readonly vehicleTypesError = signal('');
+  protected readonly showVehicleTypes = signal(false);
+  private vehicleTypesSubscription?: Subscription;
   protected selectedYear: number | null = null;
   protected readonly models = signal<VehicleModel[]>([]);
   protected readonly isLoadingModels = signal(false);
@@ -74,10 +80,42 @@ export class App {
   );
 
 
+  protected onSelectionChange(): void {
+    this.resetResults();
+
+    if (this.selectedMake && this.selectedYear !== null) {
+      this.loadModels();
+    }
+  }
+
   protected resetResults(): void {
     this.hasSearched.set(false);
     this.models.set([]);
     this.modelsError.set('');
+    this.vehicleTypesSubscription?.unsubscribe();
+    this.showVehicleTypes.set(false);
+    this.vehicleTypes.set([]);
+    this.vehicleTypesError.set('');
+    this.isLoadingVehicleTypes.set(false);
+  }
+
+  protected loadVehicleTypes(makeId: number): void {
+    this.vehicleTypesSubscription?.unsubscribe();
+    this.showVehicleTypes.set(true);
+    this.isLoadingVehicleTypes.set(true);
+    this.vehicleTypesError.set('');
+    this.vehicleTypes.set([]);
+
+    this.vehicleTypesSubscription = this.vehicleService
+      .getVehicleTypesForMake(makeId)
+      .pipe(finalize(() => this.isLoadingVehicleTypes.set(false)))
+      .subscribe({
+        next: (vehicleTypes) => this.vehicleTypes.set(vehicleTypes),
+        error: (error) => {
+          console.error('Error loading vehicle types:', error);
+          this.vehicleTypesError.set('Failed to load vehicle types. Please try again.');
+        }
+      });
   }
 
   protected loadModels(): void {
@@ -90,6 +128,7 @@ export class App {
     this.isLoadingModels.set(true);
     this.modelsError.set('');
     this.models.set([]);
+    this.loadVehicleTypes(this.selectedMake.id);
 
     this.vehicleService
       .getModelsForMakeYear(this.selectedMake.id, this.selectedYear)

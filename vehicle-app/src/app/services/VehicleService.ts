@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Make } from '../models/make';
 import { VehicleModel } from '../models/VehicleModel';
+import { VehicleType } from '../models/VehicleType';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -18,6 +20,10 @@ export class VehicleService {
     });
   }
 
+
+  getVehicleTypesForMake(makeId: number): Observable<VehicleType[]> {
+    return this.http.get<VehicleType[]>(`${this.apiUrl}/${makeId}/VehicleTypes`);
+  }
 
   getModelsForMakeYear(
     makeId: number,

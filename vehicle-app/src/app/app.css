@@ -241,17 +241,6 @@ h2 {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(78, 97, 214, 0.25);
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease,
-    opacity 0.16s ease;
-}
-.search-button:not(:disabled):hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(78, 97, 214, 0.33);
-}
-.search-button:not(:disabled):hover .arrow {
-  transform: translateX(3px);
 }
 .search-button:focus-visible,
 .ghost-button:focus-visible,
@@ -267,7 +256,6 @@ h2 {
 .arrow {
   font-size: 19px;
   line-height: 1;
-  transition: transform 0.16s ease;
 }
 .spinner {
   width: 16px;
@@ -415,6 +403,38 @@ h2 {
 .skeleton-row {
   height: 48px;
   margin-top: 10px;
+}
+
+/* Vehicle types table */
+.types-section {
+  margin-top: 20px;
+}
+.types-section h2 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+.types-message {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+  font-size: 14px;
+  cursor: default;
+  pointer-events: none;
+}
+.simple-table th,
+.simple-table td {
+  padding: 10px 12px;
+  border: 1px solid #e3e7ef;
+  text-align: left;
+}
+.simple-table th {
+  background: transparent;
+  font-weight: 600;
 }
 
 .page-footer {

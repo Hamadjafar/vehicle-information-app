@@ -39,20 +39,7 @@
       </p>
     </section>
 
-    <section class="search-card" aria-labelledby="search-title">
-      <div class="card-heading">
-        <div>
-          <h2 id="search-title">Explore vehicles</h2>
-          <p>Two quick choices and you're done.</p>
-        </div>
-
-        <ol class="steps" aria-label="Progress">
-          <li [class.done]="selectedMake">1</li>
-          <li [class.done]="selectedYear !== null">2</li>
-          <li [class.done]="models().length > 0">3</li>
-        </ol>
-      </div>
-
+    <section class="search-card" aria-label="Vehicle search">
       <div class="form-grid">
         <div class="form-field">
           <label for="make">
@@ -61,7 +48,7 @@
           </label>
 
           <ng-select class="app-select" labelForId="make" name="make" [items]="(makes$ | async) ?? []"
-            bindLabel="makeName" [(ngModel)]="selectedMake" (ngModelChange)="resetResults()"
+            bindLabel="makeName" [(ngModel)]="selectedMake" (ngModelChange)="onSelectionChange()"
             [typeahead]="makeSearch$" [minTermLength]="minMakeSearchLength" [clearable]="true"
             [loading]="isSearchingMakes()" placeholder="Search a make, e.g. Toyota"
             typeToSearchText="Type at least 2 characters to search" notFoundText="No matching makes found"
@@ -88,25 +75,45 @@
           </label>
 
           <ng-select class="app-select" labelForId="year" name="year" [items]="years" [(ngModel)]="selectedYear"
-            (ngModelChange)="resetResults()" [clearable]="true" placeholder="Select a year"
+            (ngModelChange)="onSelectionChange()" [clearable]="true" placeholder="Select a year"
             notFoundText="No matching year" appendTo="body">
           </ng-select>
 
           <p class="field-hint">Type to jump to a year.</p>
         </div>
       </div>
-
-      <button class="search-button" type="button" [disabled]="!selectedMake || selectedYear === null || isLoadingModels()"
-        (click)="loadModels()">
-        @if (isLoadingModels()) {
-        <span class="spinner" aria-hidden="true"></span>
-        Loading models...
-        } @else {
-        Explore vehicles
-        <span class="arrow" aria-hidden="true">→</span>
-        }
-      </button>
     </section>
+
+    @if (showVehicleTypes()) {
+    <section class="types-section" aria-labelledby="types-title">
+      <h2 id="types-title">Vehicle types for {{ searchedMake }}</h2>
+
+      @if (isLoadingVehicleTypes()) {
+      <p class="types-message">Loading vehicle types...</p>
+      } @else if (vehicleTypesError()) {
+      <p class="field-error" role="alert">{{ vehicleTypesError() }}</p>
+      } @else if (vehicleTypes().length > 0) {
+      <table class="simple-table">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Vehicle type</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (type of vehicleTypes(); track type.vehicleTypeId) {
+          <tr>
+            <td>{{ type.vehicleTypeId }}</td>
+            <td>{{ type.vehicleTypeName }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      } @else {
+      <p class="types-message">No vehicle types found.</p>
+      }
+    </section>
+    }
 
     @if (isLoadingModels()) {
     <section class="search-card results-card" aria-busy="true">
