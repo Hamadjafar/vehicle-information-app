@@ -10,7 +10,7 @@ import { VehicleType } from '../models/VehicleType';
   providedIn: 'root'
 })
 export class VehicleService {
-  private readonly apiUrl = 'https://localhost:7075/api/Makes';
+  private readonly apiUrl = 'http://localhost:5000/api/Makes';
 
   constructor(private readonly http: HttpClient) { }
 

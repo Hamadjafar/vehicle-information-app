@@ -76,7 +76,6 @@ namespace VehicleApp.Api.Services
                 throw new HttpRequestException("NHTSA returned an empty response.");
             }
 
-            // NHTSA data has padded names, blanks and repeated IDs, so clean it once before caching.
             return response.Results
                 .Where(make => !string.IsNullOrWhiteSpace(make.MakeName))
                 .DistinctBy(make => make.MakeId)
