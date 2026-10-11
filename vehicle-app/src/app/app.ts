@@ -54,7 +54,7 @@ export class App {
         this.isSearchingMakes.set(true);
         this.makesError.set('');
       }),
-      // switchMap cancels the previous request when the user keeps typing.
+     
       switchMap((term) =>
         this.vehicleService.searchMakes(term).pipe(
           catchError((error) => {
