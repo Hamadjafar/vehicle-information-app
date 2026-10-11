@@ -11,7 +11,6 @@ namespace VehicleApp.Api.Services
         private const string AllMakesCacheKey = "nhtsa:all-makes";
         private static readonly TimeSpan AllMakesCacheDuration = TimeSpan.FromHours(24);
 
-        // Static because the typed HttpClient service is transient; one lock guards the shared cache entry.
         private static readonly SemaphoreSlim AllMakesLock = new(1, 1);
 
         private readonly HttpClient _httpClient;
@@ -53,7 +52,6 @@ namespace VehicleApp.Api.Services
             await AllMakesLock.WaitAsync(cancellationToken);
             try
             {
-                // Another request may have filled the cache while this one was waiting.
                 if (_cache.TryGetValue(AllMakesCacheKey, out cached) && cached is not null)
                 {
                     return cached;
