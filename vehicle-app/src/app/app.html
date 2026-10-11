@@ -1,0 +1,183 @@
+<div class="page-container">
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="VehicleInfo home">
+      <span class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="44" height="44">
+          <defs>
+            <linearGradient id="logoGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#7c8cff" />
+              <stop offset="1" stop-color="#3f51d6" />
+            </linearGradient>
+          </defs>
+          <rect width="48" height="48" rx="14" fill="url(#logoGradient)" />
+          <path d="M11 29.5v-4.2c0-1 .5-1.9 1.4-2.4l3.4-1.9 2.7-4.6c.6-1 1.7-1.6 2.9-1.6h6.5c1.1 0 2.1.5 2.7 1.4l3.4 4.8 3 1.1c1.2.4 2 1.6 2 2.9v4.5c0 .8-.7 1.5-1.5 1.5H12.5c-.8 0-1.5-.7-1.5-1.5Z"
+            fill="#fff" />
+          <path d="M19.5 21.2l2-3.4c.2-.4.6-.6 1-.6H24v4h-4.5Zm6.5 0v-4h1.8c.4 0 .8.2 1 .5l2.5 3.5H26Z" fill="#3f51d6" />
+          <circle cx="17.5" cy="31" r="3.6" fill="#1e2a6b" stroke="#fff" stroke-width="2" />
+          <circle cx="31" cy="31" r="3.6" fill="#1e2a6b" stroke="#fff" stroke-width="2" />
+        </svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">Vehicle<span class="brand-highlight">Info</span></span>
+        <span class="brand-tagline">Make &amp; model explorer</span>
+      </span>
+    </a>
+
+    <span class="header-badge">
+      <span class="status-dot" aria-hidden="true"></span>
+      NHTSA vPIC data
+    </span>
+  </header>
+
+  <main class="main-content">
+    <section class="intro-section">
+      <span class="eyebrow">VEHICLE EXPLORER</span>
+      <h1>Find the right vehicle<br />for your needs.</h1>
+      <p>
+        Search for a manufacturer, pick a production year, and see every model
+        available for that year.
+      </p>
+    </section>
+
+    <section class="search-card" aria-labelledby="search-title">
+      <div class="card-heading">
+        <div>
+          <h2 id="search-title">Explore vehicles</h2>
+          <p>Two quick choices and you're done.</p>
+        </div>
+
+        <ol class="steps" aria-label="Progress">
+          <li [class.done]="selectedMake">1</li>
+          <li [class.done]="selectedYear !== null">2</li>
+          <li [class.done]="models().length > 0">3</li>
+        </ol>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="make">
+            <span class="field-step">1</span>
+            Vehicle make
+          </label>
+
+          <ng-select class="app-select" labelForId="make" name="make" [items]="(makes$ | async) ?? []"
+            bindLabel="makeName" [(ngModel)]="selectedMake" (ngModelChange)="resetResults()"
+            [typeahead]="makeSearch$" [minTermLength]="minMakeSearchLength" [clearable]="true"
+            [loading]="isSearchingMakes()" placeholder="Search a make, e.g. Toyota"
+            typeToSearchText="Type at least 2 characters to search" notFoundText="No matching makes found"
+            loadingText="Searching makes..." appendTo="body">
+            <ng-template ng-option-tmp let-item="item" let-search="searchTerm">
+              <span class="option-row">
+                <span class="option-avatar">{{ item.makeName.charAt(0) }}</span>
+                <span class="option-label">{{ item.makeName }}</span>
+              </span>
+            </ng-template>
+          </ng-select>
+
+          @if (makesError()) {
+          <p class="field-error" role="alert">{{ makesError() }}</p>
+          } @else {
+          <p class="field-hint">Start typing to search all manufacturers.</p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="year">
+            <span class="field-step">2</span>
+            Manufacturing year
+          </label>
+
+          <ng-select class="app-select" labelForId="year" name="year" [items]="years" [(ngModel)]="selectedYear"
+            (ngModelChange)="resetResults()" [clearable]="true" placeholder="Select a year"
+            notFoundText="No matching year" appendTo="body">
+          </ng-select>
+
+          <p class="field-hint">Type to jump to a year.</p>
+        </div>
+      </div>
+
+      <button class="search-button" type="button" [disabled]="!selectedMake || selectedYear === null || isLoadingModels()"
+        (click)="loadModels()">
+        @if (isLoadingModels()) {
+        <span class="spinner" aria-hidden="true"></span>
+        Loading models...
+        } @else {
+        Explore vehicles
+        <span class="arrow" aria-hidden="true">→</span>
+        }
+      </button>
+    </section>
+
+    @if (isLoadingModels()) {
+    <section class="search-card results-card" aria-busy="true">
+      <div class="skeleton skeleton-title"></div>
+      @for (row of [1, 2, 3, 4]; track row) {
+      <div class="skeleton skeleton-row"></div>
+      }
+    </section>
+    }
+
+    @if (modelsError()) {
+    <section class="search-card results-card state-card" role="alert">
+      <span class="state-icon error">!</span>
+      <div>
+        <h3>Something went wrong</h3>
+        <p>{{ modelsError() }}</p>
+      </div>
+      <button class="ghost-button" type="button" (click)="loadModels()">Try again</button>
+    </section>
+    }
+
+    @if (hasSearched() && !isLoadingModels() && !modelsError()) {
+    @if (models().length > 0) {
+    <section class="search-card results-card" aria-labelledby="results-title">
+      <div class="results-heading">
+        <div>
+          <h2 id="results-title">Vehicle models</h2>
+          <p>{{ models().length }} model(s) found</p>
+        </div>
+        <div class="chips">
+          <span class="chip">{{ searchedMake }}</span>
+          <span class="chip">{{ searchedYear }}</span>
+        </div>
+      </div>
+
+      <div class="models-list">
+        @for (model of paginatedModels(); track model.modelId) {
+        <div class="model-item">
+          <span class="model-name">{{ model.modelName }}</span>
+          <span class="model-id">#{{ model.modelId }}</span>
+        </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+      <nav class="pagination" aria-label="Results pages">
+        <button type="button" (click)="currentPage.set(currentPage() - 1)" [disabled]="currentPage() === 1">
+          ← Previous
+        </button>
+        <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+        <button type="button" (click)="currentPage.set(currentPage() + 1)" [disabled]="currentPage() === totalPages()">
+          Next →
+        </button>
+      </nav>
+      }
+    </section>
+    } @else {
+    <section class="search-card results-card state-card">
+      <span class="state-icon">?</span>
+      <div>
+        <h3>No models found</h3>
+        <p>There are no models for {{ searchedMake }} in {{ searchedYear }}. Try another year.</p>
+      </div>
+    </section>
+    }
+    }
+
+    <footer class="page-footer">
+      Vehicle information powered by the NHTSA vPIC API.
+    </footer>
+  </main>
+</div>
+
+<router-outlet />

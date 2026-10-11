@@ -1,5 +1,7 @@
 
 using Microsoft.AspNetCore.Diagnostics;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 using VehicleApp.Api.Services;
 
 namespace VehicleApp.Api
@@ -12,12 +14,26 @@ namespace VehicleApp.Api
 
             // Add services to the container.
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AngularApp", policy =>
+                {
+                    policy
+                        .WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+
             builder.Services.AddControllers();
+
+            builder.Services.AddMemoryCache();
 
             builder.Services.AddHttpClient<NhtsaService>(client =>
             {
                 client.BaseAddress = new Uri("https://vpic.nhtsa.dot.gov/api/");
-            });
+            })
+            .AddStandardResilienceHandler();
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -25,7 +41,6 @@ namespace VehicleApp.Api
 
 
             var app = builder.Build();
-
 
             app.UseExceptionHandler(errorApp =>
             {
@@ -39,6 +54,8 @@ namespace VehicleApp.Api
                     {
                         ArgumentException => StatusCodes.Status400BadRequest,
                         TaskCanceledException => StatusCodes.Status504GatewayTimeout,
+                        TimeoutRejectedException => StatusCodes.Status504GatewayTimeout,
+                        BrokenCircuitException => StatusCodes.Status503ServiceUnavailable,
                         HttpRequestException => StatusCodes.Status502BadGateway,
                         _ => StatusCodes.Status500InternalServerError
                     };
@@ -48,6 +65,7 @@ namespace VehicleApp.Api
                         StatusCodes.Status400BadRequest => "Invalid request parameters.",
                         StatusCodes.Status504GatewayTimeout => "The external service request timed out.",
                         StatusCodes.Status502BadGateway => "The external service request failed.",
+                        StatusCodes.Status503ServiceUnavailable => "The external service is temporarily unavailable.",
 
                         _ => "An unexpected error occurred."
                     };
@@ -61,7 +79,7 @@ namespace VehicleApp.Api
             });
 
 
-            // Configure the HTTP request pipeline.
+          
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -69,6 +87,7 @@ namespace VehicleApp.Api
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AngularApp");
 
             app.UseAuthorization();
 
