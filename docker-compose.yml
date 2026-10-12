@@ -1,0 +1,22 @@
+
+services:
+  backend:
+    build:
+      context: ./VehicleApp.Api
+    container_name: vehicleapp-api-container
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./vehicle-app
+    container_name: vehicleapp-frontend-container
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
